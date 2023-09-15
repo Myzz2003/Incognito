@@ -12,6 +12,6 @@ pip install --upgrade opencv-python
 ### 1.2. 运行
 
 ```bash
-python faceRecognize.py
+python main.py
 ```
 
