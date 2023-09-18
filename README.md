@@ -6,7 +6,6 @@
 
 ```bash
 pip install -r requirements.txt
-pip install --upgrade opencv-python
 ```
 
 ### 1.2. 运行
