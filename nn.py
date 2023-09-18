@@ -33,23 +33,26 @@ class Net(nn.Module):
 
     def __init__(self, inputSize: tuple[int, int], outputSize: int, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        # resize all input images to 64*64
         self.inputSize = inputSize
         linear_input_size = inputSize[0] * inputSize[1]
         self.Backbone = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.LayerNorm((32, inputSize[0]//2, inputSize[1]//2)),
+            nn.LazyBatchNorm2d(),
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Flatten(),
-            nn.Linear(in_features=linear_input_size, out_features=128),
+            nn.Linear(in_features=linear_input_size, out_features=120),
+            nn.LeakyReLU(),
+            # nn.BatchNorm1d(120),
+            nn.Linear(in_features=120, out_features=84),
             nn.ReLU(),
-            nn.Linear(in_features=128, out_features=128),
-            nn.ReLU(),
-            nn.Linear(in_features=128, out_features=outputSize),
+            nn.Linear(in_features=84, out_features=outputSize),
             nn.Softmax(dim=1)
             )
     
@@ -58,8 +61,9 @@ class Net(nn.Module):
         return self.Backbone(x)
     
 class ImageDataset(Dataset):
-        def __init__(self, data_dir: str, labels: list[str], input_size: tuple[int, int]) -> None:
+        def __init__(self, data_dir: str, labels: list[str], input_size: tuple[int, int], device: torch.device = torch.device("cpu")) -> None:
             self.data_dir = data_dir
+            self.device = device
             self.input_size = input_size
             self.labels = labels
             self.data = []
@@ -73,25 +77,27 @@ class ImageDataset(Dataset):
         
         def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
             img_path, label = self.data[index]
-            img = cv.imread(img_path, cv.IMREAD_GRAYSCALE)
+            img = cv.imread(img_path)
             img = OptimizeImage(img)
             img = cv.resize(img, self.input_size)
-            nimg = img
-            img = torch.tensor(img)
-            img = img.unsqueeze(0)
-            img = img.float()
+            # 3 channels [3, 128, 128]
+            # the given code is [128, 128, 3] which is wrong. correct it.
+            # img = torch.tensor(img).unsqueeze(0).float().to(self.device) -> wrong
+            img = torch.tensor(img).permute(2, 0, 1).float().to(self.device)
             retLabel = torch.zeros(len(self.labels))
             retLabel[self.labels.index(label)] = 1
+            retLabel = retLabel.to(self.device)
 
             return img, retLabel
 
 
 
 class NetworkProcessor:
-    def __init__(self, data_dir: str, input_shape: tuple[int, int], model_path: str = None) -> None:
+    def __init__(self, data_dir: str, input_shape: tuple[int, int], model_path: str = None, device: str = "cpu") -> None:
         self.data_dir = data_dir
         self.label_dict = {}
         self.input_shape = input_shape
+        self.device = torch.device(device)
         
         idx = 0
         for label in os.listdir(data_dir):
@@ -110,8 +116,9 @@ class NetworkProcessor:
         labels = list(self.label_dict.values())
         print(f"train with labels: {self.label_dict.values()}")
 
+        self.net.to(self.device)
             
-        dataset = ImageDataset(self.data_dir, labels, self.input_shape)
+        dataset = ImageDataset(self.data_dir, labels, self.input_shape, device=self.device)
         dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
         print(f"Length of Dataset:{len(dataset)}")
 
@@ -119,7 +126,7 @@ class NetworkProcessor:
 
         # train
         criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.SGD(self.net.parameters(), lr=0.001)
+        optimizer = torch.optim.SGD(self.net.parameters(), lr=0.0005, momentum=0.9)
         for epoch in range(100):
             for i, (inputs, labels) in enumerate(dataloader):
                 optimizer.zero_grad()
@@ -127,27 +134,28 @@ class NetworkProcessor:
                 loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
-                print(f"epoch: {epoch}, batch: {i}, loss: {loss}") if epoch % 10 == 0 and i == 0 else None
+                print(f"epoch: {epoch}, loss: {loss}") if epoch % 10 == 0 and i == 0 else None
 
         # save model
         torch.save(self.net.state_dict(), "./model.pt")
         print(f"Model saved at \"./model.pt\".")
 
-    def getLabelFromNet(self, img: np.ndarray) -> str:
+    def getLabelFromNet(self, img: np.ndarray) -> dict:
         img = cv.resize(img, self.input_shape)
         img = OptimizeImage(img)
-        img = torch.tensor(img).unsqueeze(0).unsqueeze(0).float()
+        img = torch.tensor(img).permute(2, 0, 1).unsqueeze(0).float().to(self.device)
         out = self.net(img)
         idx = torch.argmax(out)
         # convert to integer
         idx = idx.item()
-        return self.label_dict[idx]
+        retdict = {"label": self.label_dict[idx], "confidence": out[0][idx].item()}
+        return retdict
 
 
 if __name__ == '__main__':
-    npro = NetworkProcessor("./sorted_faces",(96, 96), "./model.pt")
-    img = cv.imread("./faces/face_11.jpg", cv.IMREAD_GRAYSCALE)
-    print(npro.getLabelFromNet(img))
+    img = cv.imread("./faces/face_11.jpg")
+    img = torch.tensor(img).permute(2, 0, 1).unsqueeze(0).float()
+    print(img.shape)
 
             
 

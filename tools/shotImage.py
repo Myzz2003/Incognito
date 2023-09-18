@@ -28,11 +28,14 @@ while True:
         if w*h > min_interest_size:
             grab_face_flag = True
             face_area = frame[y:y+h, x:x+w]
+            cv.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
             break
         else:
             continue
 
-    if grab_face_flag:
+    
+
+    if grab_face_flag and cv.waitKey(1) == ord('1'):
         # get directory file list
         file_list = os.listdir("./faces")
         # name the file with format "face_{n}.jpg"
@@ -48,9 +51,12 @@ while True:
         # save the face
         cv.imwrite(f"./faces/face_{last_file_num+1}.jpg", face_area)
         print(f"face_{last_file_num+1}.jpg saved")
+
+    cv.imshow("frame", frame)
+    if cv.waitKey(1) == ord(" "):
         break
 
-cv.imshow("face", face_area)
-cv.waitKey(0)
+# cv.imshow("face", face_area)
+# cv.waitKey(0)
 
 video.release()

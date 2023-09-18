@@ -12,8 +12,10 @@ from numba import jit, njit
 # @jit(forceobj=True)
 def OptimizeImage(img: cv.Mat) -> cv.Mat:
     if len(img.shape) == 3:
-        img= cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    img = cv.equalizeHist(img)
+        for i in range(3):
+            img[:, :, i] = cv.equalizeHist(img[:, :, i])
+    else:
+        img = cv.equalizeHist(img)
     img = cv.GaussianBlur(img, (5, 5), 0)
     return img
 
@@ -111,7 +113,7 @@ def KNNMatch(bf: cv.BFMatcher, current_des: np.ndarray, local_des_dict: dict) ->
             
 
 if __name__ == '__main__':
-    sift = cv.SIFT_create()
-    bf = cv.BFMatcher()
-    des_dict = GetImageDescriptor(sift, "./faces")
-    match = MergeDescriptors(des_dict, 10)
+    img = cv.imread("faces/face_11.jpg")
+    img = OptimizeImage(img)
+    cv.imshow("img", img)
+    cv.waitKey(0)

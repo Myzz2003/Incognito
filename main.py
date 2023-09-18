@@ -12,7 +12,7 @@ video = cv.VideoCapture(1)
 face_cascade = cv.CascadeClassifier(CASCADE_CLASSIFIER_PATH)
 
 
-net = npr("./sorted_faces", (128, 128))
+net = npr("./sorted_faces", (64, 64))
 net.trainNetwork()
 
 face_area = None
@@ -55,28 +55,16 @@ while True:
             continue
 
     if grab_face_flag:
-        # find all feauture points
-        face_area_gray = cv.cvtColor(face_area, cv.COLOR_BGR2GRAY)
-        # roi = SelectROI(face_area_gray, 0.95)
-        
-        '''
-        kp2, des2 = sift.detectAndCompute(roi, None)
-
-        match = KNNMatch(bf, des2, des_dict)
-        for key in match.keys():
-            if match[key] > 10:
-                cv.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-                cv.putText(frame, key, (x, y), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
-                break        
-        '''
-
-        res = net.getLabelFromNet(face_area_gray)
-        cv.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        cv.putText(frame, res, (x, y), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
+        res = net.getLabelFromNet(face_area)
+        res_label = res["label"]
+        res_confidence = res["confidence"]
+        if res_confidence > 0.5:
+            cv.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            cv.putText(frame, f"{res_label}: {res_confidence:.2f}", (x, y), cv.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
 
 
     end_time = time.time()
-    cv.putText(frame, f"FPS: {1 / (end_time - start_time):.2f}", (10, 30), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+    cv.putText(frame, f"FPS: {1 / (end_time - start_time):.0f}", (10, 30), cv.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
     cv.imshow("frame", frame)
     
     # if any key pressed, break
