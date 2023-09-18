@@ -14,3 +14,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
+
+## 2. 声明
+
+这是一个尚未完善的仓。
