@@ -7,13 +7,17 @@ import cv2 as cv
 import numpy as np
 import os
 
+from numba import jit, njit
+
+# @jit(forceobj=True)
 def OptimizeImage(img: cv.Mat) -> cv.Mat:
     if len(img.shape) == 3:
-        img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        img= cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     img = cv.equalizeHist(img)
     img = cv.GaussianBlur(img, (5, 5), 0)
     return img
 
+# @jit(nopython=True)
 def SelectROI(img: cv.Mat, ROI_scale: float, alias: int = 0) -> cv.Mat:
     '''
         img: image to select ROI
@@ -21,7 +25,8 @@ def SelectROI(img: cv.Mat, ROI_scale: float, alias: int = 0) -> cv.Mat:
         alias: alias of ROI -> {0: center, 1: left, 2: right}
     '''
     if len(img.shape) == 3:
-        img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        # img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        return None
     h, w = img.shape
     roi_h = int(h * ROI_scale)
     roi_w = int(w * ROI_scale)
@@ -35,6 +40,7 @@ def SelectROI(img: cv.Mat, ROI_scale: float, alias: int = 0) -> cv.Mat:
         return img[roi_y:roi_y+roi_h, -roi_w:]
     else:
         return None
+
 
 def GetImageDescriptor(sift: cv.SIFT, image_directory: str) -> dict[str: np.ndarray]:
     '''
@@ -53,6 +59,7 @@ def GetImageDescriptor(sift: cv.SIFT, image_directory: str) -> dict[str: np.ndar
             key_name = filename.split(".")[0]
             des_dict[key_name] = des
     return des_dict if len(des_dict) > 0 else None
+
 
 def MergeDescriptors(des_dict: dict[str: np.ndarray], threshold: int = 20) -> dict[str: np.ndarray]:
     '''
@@ -80,6 +87,7 @@ def MergeDescriptors(des_dict: dict[str: np.ndarray], threshold: int = 20) -> di
                 break
     return new_des_dict
 
+# @jit(forceobj=True) 
 def KNNMatch(bf: cv.BFMatcher, current_des: np.ndarray, local_des_dict: dict) -> dict[str: int]:
     '''
         current_des: descriptor of current frame
