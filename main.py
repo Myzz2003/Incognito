@@ -12,8 +12,8 @@ video = cv.VideoCapture(1)
 face_cascade = cv.CascadeClassifier(CASCADE_CLASSIFIER_PATH)
 
 
-net = npr("./sorted_faces", (64, 64))
-net.trainNetwork()
+net = npr("./sorted_faces", (64, 64), "./model.pt")
+# net.trainNetwork()
 
 face_area = None
 sift = cv.SIFT_create()
