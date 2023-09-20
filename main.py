@@ -3,8 +3,8 @@ CASCADE_CLASSIFIER_PATH: str = "/Users/maoyingzhe/opt/anaconda3/lib/python3.9/si
 import cv2 as cv
 import os
 import time
-import torch
-from utils import OptimizeImage, GetImageDescriptor, KNNMatch, MergeDescriptors, SelectROI
+# import torch
+# from utils import OptimizeImage, GetImageDescriptor, KNNMatch, MergeDescriptors, SelectROI
 from nn import NetworkProcessor as npr
 
 os.system("clear")
@@ -13,16 +13,10 @@ face_cascade = cv.CascadeClassifier(CASCADE_CLASSIFIER_PATH)
 
 
 net = npr("./sorted_faces", (64, 64), "./model.pt")
-# net.trainNetwork()
 
 face_area = None
-sift = cv.SIFT_create()
-bf = cv.BFMatcher()
 
 print(f"Utilities Loaded.")
-
-des_dict = GetImageDescriptor(sift, "./faces")
-des_dict = MergeDescriptors(des_dict, threshold=10)
 
 print(f"Descriptors Loaded.")
 
