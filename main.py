@@ -12,7 +12,7 @@ video = cv.VideoCapture(1)
 face_cascade = cv.CascadeClassifier(CASCADE_CLASSIFIER_PATH)
 
 
-net = npr("./sorted_faces", (64, 64), "./model.pt")
+net = npr("./sorted_faces", (96, 96), "./model.pt", device="mps")
 
 face_area = None
 
@@ -28,13 +28,13 @@ width = int(height / hw_ratio)
 size_frame =  width * height
 min_interest_size = size_frame / 8
 
+
 start_time = time.time()
 while True:
     
     ret, frame = video.read()
     if not ret:
         raise Exception("Can't receive frame (stream end?). Exiting ...")
-
     frame = cv.resize(frame, (width, height))
     gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
     faces = face_cascade.detectMultiScale(gray, 1.1, 3)
@@ -55,7 +55,6 @@ while True:
         if res_confidence > 0.5:
             cv.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
             cv.putText(frame, f"{res_label}: {res_confidence:.2f}", (x, y), cv.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
-
 
     end_time = time.time()
     cv.putText(frame, f"FPS: {1 / (end_time - start_time):.0f}", (10, 30), cv.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)

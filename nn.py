@@ -93,7 +93,7 @@ class NetworkProcessor:
         self.data_dir = data_dir
         self.label_dict = {}
         self.input_shape = input_shape
-        self.device = torch.device(device)
+        self.device = torch.device(device) 
         
         idx = 0
         for label in os.listdir(data_dir):
@@ -102,6 +102,7 @@ class NetworkProcessor:
                 idx += 1
 
         self.net = Net(input_shape, len(self.label_dict))
+        self.net.to(self.device)
         if model_path is not None:
             self.net.load_state_dict(torch.load(model_path))
             print(f"Model loaded from {model_path}")
@@ -112,8 +113,6 @@ class NetworkProcessor:
         labels = list(self.label_dict.values())
         print(f"train with labels: {self.label_dict.values()}")
 
-        self.net.to(self.device)
-            
         dataset = ImageDataset(self.data_dir, labels, self.input_shape, device=self.device)
         dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
         print(f"Length of Dataset:{len(dataset)}")
@@ -180,8 +179,8 @@ class NetworkProcessor:
         img = cv.resize(img, self.input_shape)
         img = OptimizeImage(img)
         img = torch.tensor(img).permute(2, 0, 1).unsqueeze(0).float().to(self.device)
-        out = self.net(img)
-        idx = torch.argmax(out)
+        out = self.net(img).to("cpu")
+        idx = torch.argmax(out).to("cpu")
         # convert to integer
         idx = idx.item()
         retdict = {"label": self.label_dict[idx], "confidence": out[0][idx].item()}
@@ -189,14 +188,18 @@ class NetworkProcessor:
 
 
 if __name__ == '__main__':
-    net = NetworkProcessor("./sorted_faces", (64, 64))
+    net = NetworkProcessor("./sorted_faces", (96, 96), model_path="./model.pt", device="mps")
     max_epochs = 1000
     trained_epochs = 0
     current_loss = 10
-    while trained_epochs < max_epochs and current_loss > 0.6:
-        training_info = net.trainNetwork(100, 0.0001, optimizer="Adam")
+    last_loss = 0
+    while trained_epochs < max_epochs and current_loss > 0.55:
+        training_info = net.trainNetwork(100, 0.001, optimizer="SGD")
         trained_epochs += training_info.get('trainedEpochs')
         current_loss = training_info.get('loss')
+        if current_loss >= last_loss:
+            print(f"Training stopped at {trained_epochs} epochs, loss: {current_loss}")
+            break
 
             
 
