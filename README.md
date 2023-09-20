@@ -6,7 +6,6 @@
 
 ```bash
 pip install -r requirements.txt
-pip install --upgrade opencv-python
 ```
 
 ### 1.2. 运行
@@ -15,3 +14,7 @@ pip install --upgrade opencv-python
 python main.py
 ```
 
+
+## 2. 声明
+
+这是一个尚未完善的仓。
