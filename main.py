@@ -28,9 +28,9 @@ width = int(height / hw_ratio)
 size_frame =  width * height
 min_interest_size = size_frame / 8
 
-
+start_time = time.time()
 while True:
-    start_time = time.time()
+    
     ret, frame = video.read()
     if not ret:
         raise Exception("Can't receive frame (stream end?). Exiting ...")
@@ -59,13 +59,12 @@ while True:
 
     end_time = time.time()
     cv.putText(frame, f"FPS: {1 / (end_time - start_time):.0f}", (10, 30), cv.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
+    start_time = end_time
     cv.imshow("frame", frame)
     
     # if any key pressed, break
     if cv.waitKey(1) & 0xFF == ord(' '):
         break
-
-print(f"FPS: {1 / (end_time - start_time):.2f}")
 
 
 video.release()

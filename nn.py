@@ -37,22 +37,20 @@ class Net(nn.Module):
         linear_input_size = inputSize[0] * inputSize[1]
         self.Backbone = nn.Sequential(
             nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
+            nn.SiLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.LazyBatchNorm2d(),
             nn.Conv2d(in_channels=32, out_channels=128, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
+            nn.SiLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(in_channels=128, out_channels=64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
+            nn.SiLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.LazyBatchNorm2d(64),
             nn.Flatten(),
             nn.Linear(in_features=linear_input_size, out_features=200),
-            nn.ReLU(),
-            # nn.BatchNorm1d(120),
+            nn.SiLU(),
             nn.Linear(in_features=200, out_features=84),
-            # nn.ReLU(),
-            nn.Sigmoid(),
+            nn.SiLU(),
             nn.Linear(in_features=84, out_features=outputSize),
             nn.Softmax(dim=1)
             )
