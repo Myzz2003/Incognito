@@ -188,15 +188,17 @@ class NetworkProcessor:
 
 
 if __name__ == '__main__':
-    net = NetworkProcessor("./sorted_faces", (96, 96), model_path="./model.pt", device="mps")
+    net = NetworkProcessor("./sorted_faces", (96, 96), device="mps")
     max_epochs = 1000
     trained_epochs = 0
     current_loss = 10
-    last_loss = 0
+    last_loss = 10
+    lr = 0.0005
     while trained_epochs < max_epochs and current_loss > 0.55:
-        training_info = net.trainNetwork(100, 0.001, optimizer="SGD")
+        training_info = net.trainNetwork(50, lr, optimizer="SGD")
         trained_epochs += training_info.get('trainedEpochs')
         current_loss = training_info.get('loss')
+        lr /= 2
         if current_loss >= last_loss:
             print(f"Training stopped at {trained_epochs} epochs, loss: {current_loss}")
             break

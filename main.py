@@ -3,22 +3,17 @@ CASCADE_CLASSIFIER_PATH: str = "/Users/maoyingzhe/opt/anaconda3/lib/python3.9/si
 import cv2 as cv
 import os
 import time
-# import torch
-# from utils import OptimizeImage, GetImageDescriptor, KNNMatch, MergeDescriptors, SelectROI
 from nn import NetworkProcessor as npr
 
 os.system("clear")
 video = cv.VideoCapture(1)
 face_cascade = cv.CascadeClassifier(CASCADE_CLASSIFIER_PATH)
 
-
 net = npr("./sorted_faces", (96, 96), "./model.pt", device="mps")
 
 face_area = None
 
 print(f"Utilities Loaded.")
-
-print(f"Descriptors Loaded.")
 
 # first frame process to get basic parameters
 ret, frame = video.read()
@@ -67,6 +62,3 @@ while True:
 
 
 video.release()
-
-
-    
